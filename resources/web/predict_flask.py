@@ -28,6 +28,9 @@ from kafka import KafkaProducer
 from kafka import KafkaConsumer
 producer = KafkaProducer(bootstrap_servers=['kafka:9092'],api_version=(0,10))
 PREDICTION_TOPIC = 'flight_delay_classification_request'
+consumer = KafkaConsumer(
+        'flight_delay_classification_response', 
+        bootstrap_servers=['kafka:9092'], api_version=(0,10))
 
 import uuid
 
@@ -513,17 +516,7 @@ def flight_delays_page_kafka():
 @app.route("/flights/delays/predict/classify_realtime/response/<unique_id>")
 def classify_flight_delays_realtime_response(unique_id):
     """Serves predictions to polling requestors using Kafka"""
-    
-    # Configuración del Kafka Consumer
-    consumer = KafkaConsumer(
-        'flight_delay_classification_response',  # Tema en Kafka
-        bootstrap_servers=['localhost:9092'],   # Dirección del servidor Kafka
-        auto_offset_reset='earliest',          # Leer mensajes desde el principio si es necesario
-        enable_auto_commit=True,
-        group_id='flights-predict-group',      # Grupo de consumidores
-        value_deserializer=lambda x: json.loads(x.decode('utf-8'))  # Deserializar mensajes
-    )
-    
+  
     # Respuesta inicial
     response = {"status": "WAIT", "id": unique_id}
     
