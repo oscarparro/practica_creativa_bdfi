@@ -30,7 +30,7 @@ producer = KafkaProducer(bootstrap_servers=['kafka:9092'],api_version=(0,10))
 PREDICTION_TOPIC = 'flight_delay_classification_request'
 consumer = KafkaConsumer(
     'flight_delay_classification_response',  # Tema en Kafka
-    bootstrap_servers=['localhost:9092'],    # Dirección del servidor Kafka
+    bootstrap_servers=['kafka:9092'],    # Dirección del servidor Kafka
     auto_offset_reset='earliest',            # Leer desde el principio si es necesario
     enable_auto_commit=True,
     group_id='flights-predict-group',        # Grupo de consumidores
