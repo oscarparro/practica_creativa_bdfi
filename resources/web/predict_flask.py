@@ -25,6 +25,7 @@ import datetime
 
 # Setup Kafka
 from kafka import KafkaProducer
+from kafka import KafkaConsumer
 producer = KafkaProducer(bootstrap_servers=['kafka:9092'],api_version=(0,10))
 PREDICTION_TOPIC = 'flight_delay_classification_request'
 
@@ -537,7 +538,7 @@ def classify_flight_delays_realtime_response(unique_id):
     # Cerrar el consumidor después de encontrar la predicción
     consumer.close()
 
-    return json.dumps(response)
+    return json_util.dumps(response)
 
 def shutdown_server():
   func = request.environ.get('werkzeug.server.shutdown')
