@@ -137,6 +137,7 @@ object MakePrediction {
 
     // Inspect the output
     finalPredictions.printSchema()
+    
 
     // Define MongoUri for connection
     //val writeConfig = WriteConfig(Map("uri" -> "mongodb://127.0.0.1:27017/agile_data_science.flight_delay_classification_response"))
@@ -147,30 +148,37 @@ object MakePrediction {
     //    MongoSpark.save(batchDF,writeConfig)
     //}.start()
 
-    // define a streaming query
-    val dataStreamWriter = finalPredictions
-
-      //spark.readStream
-
-      //.schema(finalPredictions.schema)
-      //.load()
-      // manipulate your streaming data
+    // Escritura en MongoDB
+    val mongoWriter = finalPredictions
       .writeStream
       .format("mongodb")
       .option("spark.mongodb.connection.uri", "mongodb://mongo:27017")
       .option("spark.mongodb.database", "agile_data_science")
-      .option("checkpointLocation", "/tmp")
       .option("spark.mongodb.collection", "flight_delay_classification_response")
+      .option("checkpointLocation", "/tmp/mongo_checkpoint")
       .outputMode("append")
+      .start()
 
-    // run the query
-    val query = dataStreamWriter.start()
-    // Console Output for predictions
+    // Escritura en Kafka
+    val kafkaWriter = finalPredictions
+      .selectExpr("UUID AS key", "to_json(struct(*)) AS value")
+      .writeStream
+      .format("kafka")
+      .option("kafka.bootstrap.servers", "kafka:9092")
+      .option("topic", "flight_delay_classification_response")
+      .option("checkpointLocation", "/tmp/kafka_checkpoint")
+      .outputMode("append")
+      .start()
 
-    val consoleOutput = finalPredictions.writeStream
+    val consoleOutput = finalPredictions
+      .writeStream
       .outputMode("append")
       .format("console")
       .start()
+
+    // Esperar la terminación de los streams
+    mongoWriter.awaitTermination()
+    kafkaWriter.awaitTermination()
     consoleOutput.awaitTermination()
   }
 
