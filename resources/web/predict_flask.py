@@ -29,12 +29,10 @@ from kafka import KafkaConsumer
 producer = KafkaProducer(bootstrap_servers=['kafka:9092'],api_version=(0,10))
 PREDICTION_TOPIC = 'flight_delay_classification_request'
 consumer = KafkaConsumer(
-    'flight_delay_classification_response',  # Tema en Kafka
-    bootstrap_servers=['kafka:9092'],    # Dirección del servidor Kafka
-    auto_offset_reset='earliest',            # Leer desde el principio si es necesario
-    enable_auto_commit=True,
-    group_id='flights-predict-group',        # Grupo de consumidores
-    value_deserializer=lambda x: json.loads(x.decode('utf-8'))  # Aquí ya se deserializa el mensaje
+    'flight_delay_classification_response',
+    bootstrap_servers=['kafka:9092'],
+    api_version=(0,10),
+    value_deserializer=lambda x: json.loads(x.decode('utf-8'))
 )
 
 import uuid
@@ -532,10 +530,7 @@ def classify_flight_delays_realtime_response(unique_id):
             response["status"] = "OK"
             response["prediction"] = prediction
             break
-    
-    # Cerrar el consumidor después de encontrar la predicción
-    consumer.close()
-
+  
     return json_util.dumps(response)
 
 def shutdown_server():
