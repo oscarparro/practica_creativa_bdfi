@@ -1,5 +1,5 @@
 import sys, os, re
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from pymongo import MongoClient
 from bson import json_util
 
@@ -24,18 +24,37 @@ import iso8601
 import datetime
 
 # Setup Kafka
+import threading
 from kafka import KafkaProducer
 from kafka import KafkaConsumer
 producer = KafkaProducer(bootstrap_servers=['kafka:9092'],api_version=(0,10))
 PREDICTION_TOPIC = 'flight_delay_classification_request'
-consumer = KafkaConsumer(
-    'flight_delay_classification_response',
-    bootstrap_servers=['kafka:9092'],
-    auto_offset_reset='earliest',
-    enable_auto_commit=True,
-    group_id=None,
-    value_deserializer=lambda x: json.loads(x.decode('utf-8')),
-    api_version=(0,10))
+
+# Variable global para almacenar las predicciones
+prediction_messages = {}
+def consume_messages():
+    """Función que consume mensajes de Kafka en un hilo separado"""
+    consumer = KafkaConsumer(
+        'flight_delay_classification_response',
+        bootstrap_servers=['kafka:9092'],
+        auto_offset_reset='earliest',
+        enable_auto_commit=True,
+        group_id=None,
+        value_deserializer=lambda x: json.loads(x.decode('utf-8'))
+    )
+
+    for message in consumer:
+        prediction = message.value
+        uuid = prediction.get("UUID")
+        
+        if uuid:
+            prediction_messages[uuid] = prediction
+            print(f"Mensaje recibido para UUID: {uuid}")
+
+# Iniciar el consumidor de Kafka en un hilo separado
+consumer_thread = threading.Thread(target=consume_messages)
+consumer_thread.daemon = True  # Este hilo se cierra cuando el proceso principal termine
+consumer_thread.start()
 
 import uuid
 
@@ -520,21 +539,18 @@ def flight_delays_page_kafka():
 
 @app.route("/flights/delays/predict/classify_realtime/response/<unique_id>")
 def classify_flight_delays_realtime_response(unique_id):
-    """Serves predictions to polling requestors using Kafka"""
-  
-    # Respuesta inicial
+    """Ruta para consultar la predicción de un vuelo en tiempo real"""
     response = {"status": "WAIT", "id": unique_id}
+
+    # Esperar hasta que se reciba el mensaje correspondiente al UUID
+    while unique_id not in prediction_messages:
+        time.sleep(1)  # Esperar un segundo antes de volver a comprobar
     
-    # Buscar el mensaje con el UUID correcto
-    for message in consumer:
-        prediction = message.value
-        
-        if prediction.get("UUID") == unique_id:
-            response["status"] = "OK"
-            response["prediction"] = prediction
-            break
-  
-    return json_utils.dumps(response)
+    prediction = prediction_messages.get(unique_id)
+    response["status"] = "OK"
+    response["prediction"] = prediction
+    
+    return jsonify(response)
 
 def shutdown_server():
   func = request.environ.get('werkzeug.server.shutdown')
