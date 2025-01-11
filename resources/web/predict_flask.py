@@ -552,7 +552,7 @@ def classify_flight_delays_realtime_response(unique_id):
     response["status"] = "OK"
     response["prediction"] = prediction
     
-    return jsonify(response)
+    return json_utils.dumps(response)
 
 def shutdown_server():
   func = request.environ.get('werkzeug.server.shutdown')
