@@ -167,7 +167,7 @@ object MakePrediction {
 
     // Escritura en Kafka
     val kafkaWriter = finalPredictions
-      .selectExpr("UUID AS key", "to_json(struct(*)) AS value")
+      .selectExpr("to_json(struct(*)) AS value")
       .writeStream
       .format("kafka")
       .option("kafka.bootstrap.servers", "kafka:9092")
