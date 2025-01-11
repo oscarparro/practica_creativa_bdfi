@@ -513,28 +513,26 @@ def flight_delays_page_kafka():
 
 @app.route("/flights/delays/predict/classify_realtime/response/<unique_id>")
 def classify_flight_delays_realtime_response(unique_id):
-  consumer = KafkaConsumer (
+  consumer = KafkaConsumer(
     'flight_delay_classification_response',
     bootstrap_servers=['kafka:9092'],
     auto_offset_reset='latest',
     enable_auto_commit=True,
   )
   
-  def get_prediction():
-    for message in consumer:
-      message_str = message.value
-      message_json = json.loads(message_str)
-      return message_json
-  prediction = get_prediction()
-  #quiero que aparezca en la consola de la terminal predicción para ello uso print y para ver el print me meto
-  print(prediction)
-  
+  # Consumir el mensaje directamente sin la función adicional
+  for message in consumer:
+    message_str = message.value
+    message_json = json.loads(message_str)
+    break  # Salir del bucle una vez que se recibe el mensaje
+
   response = {"status": "WAIT", "id": unique_id}
-  if prediction:
+  if message_json:  # Si hay un mensaje de predicción
     response["status"] = "OK"
-    response["prediction"] = prediction
+    response["prediction"] = message_json
   
   return json_util.dumps(response)
+
 
 def shutdown_server():
   func = request.environ.get('werkzeug.server.shutdown')
