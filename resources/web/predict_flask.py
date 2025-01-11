@@ -30,8 +30,6 @@ from kafka import KafkaConsumer
 producer = KafkaProducer(bootstrap_servers=['kafka:9092'],api_version=(0,10))
 PREDICTION_TOPIC = 'flight_delay_classification_request'
 
-consumer = KafkaConsumer ('flight_delay_classification_response',bootstrap_servers=['kafka:9092'],auto_offset_reset='latest',enable_auto_commit=True)
-
 import uuid
 
 # Chapter 5 controller: Fetch a flight and display it
@@ -515,19 +513,27 @@ def flight_delays_page_kafka():
 
 @app.route("/flights/delays/predict/classify_realtime/response/<unique_id>")
 def classify_flight_delays_realtime_response(unique_id):
-
-
-  for message in consumer:
-    prediction = message.value
-    prediction_json = json.loads(prediction)
-    
+  consumer = KafkaConsumer (
+    'flight_delay_classification_response',
+    bootstrap_servers=['kafka:9092'],
+    auto_offset_reset='latest',
+    enable_auto_commit=True,
+  )
+  
+  def get_prediction():
+    for message in consumer:
+      message_str = message.value
+      message_json = json.loads(message_str)
+      return message_json
+  prediction = get_prediction()
+  #quiero que aparezca en la consola de la terminal predicción para ello uso print y para ver el print me meto
+  print(prediction)
   
   response = {"status": "WAIT", "id": unique_id}
-
-  if prediction_json:
+  if prediction:
     response["status"] = "OK"
-    response["prediction"] = prediction_json
-
+    response["prediction"] = prediction
+  
   return json_util.dumps(response)
 
 def shutdown_server():
