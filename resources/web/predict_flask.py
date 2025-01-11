@@ -528,7 +528,7 @@ def classify_flight_delays_realtime_response(unique_id):
         prediction = message.value
         if prediction.get("UUID") == unique_id:
             response["status"] = "OK"
-            response["prediction"] = prediction
+            response["prediction"] = prediction.get("Prediction")
             break
   
     return json_util.dumps(response)
