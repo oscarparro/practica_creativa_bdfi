@@ -31,7 +31,9 @@ PREDICTION_TOPIC = 'flight_delay_classification_request'
 consumer = KafkaConsumer(
     'flight_delay_classification_response',
     bootstrap_servers=['kafka:9092'],
-    api_version=(0,10),
+    auto_offset_reset='earliest',
+    enable_auto_commit=True,
+    group_id=None,
     value_deserializer=lambda x: json.loads(x.decode('utf-8'))
 )
 
@@ -526,12 +528,13 @@ def classify_flight_delays_realtime_response(unique_id):
     # Buscar el mensaje con el UUID correcto
     for message in consumer:
         prediction = message.value
+        
         if prediction.get("UUID") == unique_id:
             response["status"] = "OK"
-            response["prediction"] = prediction.get("Prediction")
+            response["prediction"] = prediction
             break
   
-    return json_util.dumps(response)
+    return json.dumps(response)
 
 def shutdown_server():
   func = request.environ.get('werkzeug.server.shutdown')
