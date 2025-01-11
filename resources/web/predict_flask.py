@@ -1,9 +1,7 @@
 import sys, os, re
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request
 from pymongo import MongoClient
 from bson import json_util
-import time
-
 
 # Configuration details
 import config
@@ -32,15 +30,7 @@ from kafka import KafkaConsumer
 producer = KafkaProducer(bootstrap_servers=['kafka:9092'],api_version=(0,10))
 PREDICTION_TOPIC = 'flight_delay_classification_request'
 
-
-consumer = KafkaConsumer(
-    'flight_delay_classification_response',  # Nombre del topic
-    bootstrap_servers='kafka:9092',          # Dirección del servidor Kafka
-    auto_offset_reset='earliest',           # Leer mensajes desde el inicio si no hay un offset almacenado
-    enable_auto_commit=True,                # Confirmar automáticamente el procesamiento de mensajes
-    group_id=None,      # Grupo de consumidores
-    value_deserializer=lambda x: json.loads(x.decode('utf-8'))  # Deserializar mensajes JSON
-)
+consumer = KafkaConsumer ('flight_delay_classification_response',bootstrap_servers=['kafka:9092'],auto_offset_reset='latest',enable_auto_commit=True)
 
 import uuid
 
@@ -525,17 +515,20 @@ def flight_delays_page_kafka():
 
 @app.route("/flights/delays/predict/classify_realtime/response/<unique_id>")
 def classify_flight_delays_realtime_response(unique_id):
-  response = {"status": "WAIT", "id": unique_id}
+
 
   for message in consumer:
     prediction = message.value
+    prediction_json = json.loads(prediction)
+    
+  
+  response = {"status": "WAIT", "id": unique_id}
 
-    if prediction.get("UUID") == unique_id:
-      response["status"] = "OK"
-      response["prediction"] = prediction
-      break
+  if prediction_json:
+    response["status"] = "OK"
+    response["prediction"] = prediction_json
 
-  return json_utils.dumps(response)
+  return json_util.dumps(response)
 
 def shutdown_server():
   func = request.environ.get('werkzeug.server.shutdown')

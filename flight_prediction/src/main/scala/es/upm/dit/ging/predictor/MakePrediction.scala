@@ -163,27 +163,24 @@ object MakePrediction {
       .option("checkpointLocation", "/tmp")
       .option("spark.mongodb.collection", "flight_delay_classification_response")
       .outputMode("append")
-      .start()
 
     // Escritura en Kafka
     val kafkaWriter = finalPredictions
-      .selectExpr("to_json(struct(*)) AS value")
+      .selectExpr("CAST(UUID AS STRING) AS key","to_json(struct(*)) AS value")
       .writeStream
       .format("kafka")
       .option("kafka.bootstrap.servers", "kafka:9092")
       .option("topic", "flight_delay_classification_response")
       .option("checkpointLocation", "/tmp/kafka_checkpoint")
       .outputMode("append")
-      .start()
+    
+    val query = dataStreamWriter.start()
+    val query_kafka = kafkaWriter.start()
 
     val consoleOutput = finalPredictions.writeStream
       .outputMode("append")
       .format("console")
       .start()
-
-    // Esperar la terminación de los streams
-    dataStreamWriter.awaitTermination()
-    kafkaWriter.awaitTermination()
     consoleOutput.awaitTermination()
   }
 
