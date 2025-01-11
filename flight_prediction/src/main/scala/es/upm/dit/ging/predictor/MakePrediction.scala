@@ -10,13 +10,14 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object MakePrediction {
 
+  final val MASTER = sys.env.getOrElse("SPARK_MASTER", "local[*]")
+
   def main(args: Array[String]): Unit = {
     println("Fligth predictor starting...")
 
-    val spark = SparkSession
-      .builder
+    val spark = SparkSession.builder
       .appName("StructuredNetworkWordCount")
-      .master("local[*]")
+      .master(MASTER)
       .getOrCreate()
     import spark.implicits._
 
