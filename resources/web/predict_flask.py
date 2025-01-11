@@ -31,6 +31,8 @@ PREDICTION_TOPIC = 'flight_delay_classification_request'
 consumer = KafkaConsumer(
     'flight_delay_classification_response',
     bootstrap_servers=['kafka:9092'],
+    auto_offset_reset='earliest',
+    enable_auto_commit=True,
     group_id=None,
     value_deserializer=lambda x: json.loads(x.decode('utf-8')),
     api_version=(0,10))
