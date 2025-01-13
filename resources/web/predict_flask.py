@@ -519,17 +519,18 @@ def classify_flight_delays_realtime_response(unique_id):
     auto_offset_reset='latest',
     enable_auto_commit=True,
   )
-  
-  # Consumir el mensaje directamente sin la función adicional
+    
   for message in consumer:
-    message_str = message.value
-    message_json = json.loads(message_str)
-    break  # Salir del bucle una vez que se recibe el mensaje
+    message_bytes = message.value
+    message_string = message_bytes.decode()
+    message_object = json.loads(message_string)
+    print(message_object)
+    break
 
   response = {"status": "WAIT", "id": unique_id}
-  if message_json:  # Si hay un mensaje de predicción
+  if message_object:
     response["status"] = "OK"
-    response["prediction"] = message_json
+    response["prediction"] = message_object
   
   return json_util.dumps(response)
 

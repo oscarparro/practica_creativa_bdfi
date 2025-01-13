@@ -10,14 +10,12 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
 
 object MakePrediction {
 
-  final val MASTER = sys.env.getOrElse("SPARK_MASTER", "local[*]")
-
   def main(args: Array[String]): Unit = {
     println("Fligth predictor starting...")
 
     val spark = SparkSession.builder
       .appName("StructuredNetworkWordCount")
-      .master(MASTER)
+      .master("local[*]")
       .getOrCreate()
     import spark.implicits._
 
@@ -174,9 +172,25 @@ object MakePrediction {
       .option("topic", "flight_delay_classification_response")
       .option("checkpointLocation", "/tmp/kafka_checkpoint")
       .outputMode("append")
+
+    //Escritura en Cassandra
+     val cassandraWriter = finalPredictionsSelected
+      .writeStream
+      .format("org.apache.spark.sql.cassandra")
+      .option("keyspace", "agile_data_science")
+      .option("table", "flight_delay_classification_response")
+      .option("checkpointLocation", "/tmp/cassandra-checkpoints")
+      .option("spark.cassandra.connection.host", "cassandra")
+      .option("spark.cassandra.connection.port", "9042")
+      .option("spark.cassandra.auth.username", "cassandra") // Usuario de Cassandra
+      .option("spark.cassandra.auth.password", "cassandra")
+      .option("spark.cassandra.output.consistency.level", "LOCAL_ONE") // Contraseña de Cassandra
+      .outputMode("append")
     
     val query = dataStreamWriter.start()
     val query_kafka = kafkaWriter.start()
+    val query_cassandra = cassandraWriter.start()
+
 
     val consoleOutput = finalPredictions.writeStream
       .outputMode("append")
