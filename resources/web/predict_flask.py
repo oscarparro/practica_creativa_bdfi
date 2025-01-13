@@ -521,8 +521,7 @@ def classify_flight_delays_realtime_response(unique_id):
   )
     
   for message in consumer:
-    message_bytes = message.value
-    message_string = message_bytes.decode()
+    message_string = message.value
     message_object = json.loads(message_string)
     print(message_object)
     break
