@@ -7,6 +7,8 @@ import org.apache.spark.ml.feature.{Bucketizer, StringIndexerModel, VectorAssemb
 import org.apache.spark.sql.functions.{concat, from_json, lit}
 import org.apache.spark.sql.types.{DataTypes, StructType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.cassandra._
+import org.apache.spark.sql.functions.expr
 
 object MakePrediction {
 
@@ -136,6 +138,9 @@ object MakePrediction {
 
     // Inspect the output
     finalPredictions.printSchema()
+
+    val selectedColumns = Seq("dayofweek", "dayofyear", "dayofmonth", "dest", "depdelay", "distance", "flightdate", "origin", "prediction",     "timestamp", "uuid" )
+    val finalPredictionsSelected = finalPredictions.select(selectedColumns.map(col): _*)
     
 
     // Define MongoUri for connection
