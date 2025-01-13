@@ -4,7 +4,7 @@ import com.mongodb.spark._
 //import com.mongodb.spark.config.WriteConfig
 import org.apache.spark.ml.classification.RandomForestClassificationModel
 import org.apache.spark.ml.feature.{Bucketizer, StringIndexerModel, VectorAssembler}
-import org.apache.spark.sql.functions.{concat, from_json, lit}
+import org.apache.spark.sql.functions.{concat, from_json, lit, col}
 import org.apache.spark.sql.types.{DataTypes, StructType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
 import org.apache.spark.sql.cassandra._
@@ -139,7 +139,7 @@ object MakePrediction {
     // Inspect the output
     finalPredictions.printSchema()
 
-    val selectedColumns = Seq("dayofweek", "dayofyear", "dayofmonth", "dest", "depdelay", "distance", "flightdate", "origin", "prediction",     "timestamp", "uuid" )
+    val selectedColumns = Seq("DayOfWeek", "DayOfYear", "DayOfMonth", "Dest", "Depdelay", "Distance", "Flightdate", "Origin", "Prediction", "Timestamp", "UUID" )
     val finalPredictionsSelected = finalPredictions.select(selectedColumns.map(col): _*)
     
 
