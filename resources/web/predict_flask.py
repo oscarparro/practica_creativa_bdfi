@@ -2,6 +2,7 @@ import sys, os, re
 from flask import Flask, render_template, request
 from pymongo import MongoClient
 from bson import json_util
+import time
 
 # Configuration details
 import config
@@ -521,17 +522,27 @@ def flight_delays_page_kafka():
 
 @app.route("/flights/delays/predict/classify_realtime/response/<unique_id>")
 def classify_flight_delays_realtime_response(unique_id):
-  """Serves predictions to polling requestors"""
-  
-  response = {"status": "WAIT", "id": unique_id}
-  for message in consumer:
-    prediction = message.value
-    if prediction['UUID'] == unique_id:
-      response["status"] = "OK"
-      response["prediction"] = prediction
-      break
-  
-  return json_util.dumps(response)
+    """Serves predictions to polling requestors"""
+    
+    response = {"status": "WAIT", "id": unique_id}
+    
+    timeout = 30  # Tiempo máximo de espera en segundos
+    start_time = time.time()  # Marca el tiempo de inicio de la espera
+    
+    for message in consumer:
+        # Si hemos alcanzado el límite de tiempo, salimos del bucle
+        if time.time() - start_time > timeout:
+            response["status"] = "TIMEOUT"
+            response["message"] = "Prediction request timed out."
+            break
+        
+        prediction = message.value
+        if prediction['UUID'] == unique_id:
+            response["status"] = "OK"
+            response["prediction"] = prediction
+            break
+    
+    return json_util.dumps(response)
 
 def shutdown_server():
   func = request.environ.get('werkzeug.server.shutdown')
