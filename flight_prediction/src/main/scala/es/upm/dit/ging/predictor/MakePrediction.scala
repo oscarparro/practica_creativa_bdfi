@@ -163,6 +163,15 @@ object MakePrediction {
       .option("spark.mongodb.collection", "flight_delay_classification_response")
       .outputMode("append")
 
+    val kafkaStream = finalPredictions
+      .selectExpr("CAST(Origin AS STRING) AS key", "to_json(struct(*)) AS value")
+      .writeStream
+      .format("kafka")
+      .option("kafka.bootstrap.servers", "kafka:9092")
+      .option("topic", "flight_delay_classification_response")
+      .option("checkpointLocation", "/tmp/kafka_checkpoint")
+      .start()
+      
     // run the query
     val query = dataStreamWriter.start()
     // Console Output for predictions
