@@ -21,7 +21,7 @@ object MakePrediction {
     import spark.implicits._
 
     //Load the arrival delay bucketizer
-    val base_path= "/Users/admin/Downloads/practica_big_data_2019"
+    val base_path= "home/practica_creativa_bdfi"
     val arrivalBucketizerPath = "%s/models/arrival_bucketizer_2.0.bin".format(base_path)
     print(arrivalBucketizerPath.toString())
     val arrivalBucketizer = Bucketizer.load(arrivalBucketizerPath)
@@ -46,7 +46,7 @@ object MakePrediction {
     val df = spark
       .readStream
       .format("kafka")
-      .option("kafka.bootstrap.servers", "localhost:9092")
+      .option("kafka.bootstrap.servers", "kafka:9092")
       .option("subscribe", "flight_delay_classification_request")
       .load()
     df.printSchema()
@@ -157,7 +157,7 @@ object MakePrediction {
       // manipulate your streaming data
       .writeStream
       .format("mongodb")
-      .option("spark.mongodb.connection.uri", "mongodb://127.0.0.1:27017")
+      .option("spark.mongodb.connection.uri", "mongodb://mongo:27017")
       .option("spark.mongodb.database", "agile_data_science")
       .option("checkpointLocation", "/tmp")
       .option("spark.mongodb.collection", "flight_delay_classification_response")
