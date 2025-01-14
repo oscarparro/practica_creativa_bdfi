@@ -25,8 +25,16 @@ import datetime
 
 # Setup Kafka
 from kafka import KafkaProducer
+from kafka import KafkaConsumer
 producer = KafkaProducer(bootstrap_servers=['kafka:9092'],api_version=(0,10))
 PREDICTION_TOPIC = 'flight_delay_classification_request'
+
+consumer = KafkaConsumer(
+  'flight_delay_classification_response',
+  bootstrap_servers=['kafka:9092'],
+  auto_offset_reset='earliest',
+  enable_auto_commit=True,
+  value_deserializer=lambda x: json.loads(x.decode('utf-8')))
 
 import uuid
 
@@ -513,16 +521,13 @@ def flight_delays_page_kafka():
 def classify_flight_delays_realtime_response(unique_id):
   """Serves predictions to polling requestors"""
   
-  prediction = client.agile_data_science.flight_delay_classification_response.find_one(
-    {
-      "UUID": unique_id
-    }
-  )
-  
   response = {"status": "WAIT", "id": unique_id}
-  if prediction:
-    response["status"] = "OK"
-    response["prediction"] = prediction
+  for message in consumer:
+    prediction = message.value
+    if prediction['UUID'] == unique_id:
+      response["status"] = "OK"
+      response["prediction"] = prediction
+      break
   
   return json_util.dumps(response)
 
