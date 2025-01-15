@@ -4,9 +4,10 @@ import com.mongodb.spark._
 //import com.mongodb.spark.config.WriteConfig
 import org.apache.spark.ml.classification.RandomForestClassificationModel
 import org.apache.spark.ml.feature.{Bucketizer, StringIndexerModel, VectorAssembler}
-import org.apache.spark.sql.functions.{concat, from_json, lit}
+import org.apache.spark.sql.functions.{concat, from_json, lit, col}
 import org.apache.spark.sql.types.{DataTypes, StructType}
 import org.apache.spark.sql.{DataFrame, SparkSession}
+import org.apache.spark.sql.cassandra._
 
 object MakePrediction {
 
@@ -175,7 +176,7 @@ object MakePrediction {
       .option("topic", "flight_delay_classification_response")
       .option("checkpointLocation", "/tmp/kafka_checkpoint")
       .outputMode("append")
-      
+
     val cassandraStreamWriter = finalPredictionsSelected
       .writeStream
       .format("org.apache.spark.sql.cassandra")
