@@ -30,15 +30,6 @@ from kafka import KafkaConsumer
 producer = KafkaProducer(bootstrap_servers=['kafka:9092'],api_version=(0,10))
 PREDICTION_TOPIC = 'flight_delay_classification_request'
 
-consumer = KafkaConsumer(
-  'flight_delay_classification_response',
-  bootstrap_servers=['kafka:9092'],
-  api_version=(0,10),
-  auto_offset_reset='earliest',
-  enable_auto_commit=True,
-  value_deserializer=lambda x: json.loads(x.decode('utf-8'))
-)
-
 import uuid
 
 # Chapter 5 controller: Fetch a flight and display it
@@ -526,13 +517,21 @@ def classify_flight_delays_realtime_response(unique_id):
   
   response = {"status": "WAIT", "id": unique_id}
   
+  consumer = KafkaConsumer(
+    'flight_delay_classification_response',
+    bootstrap_servers=['kafka:9092'],
+    api_version=(0,10),
+    auto_offset_reset='earliest',
+    enable_auto_commit=True,
+    value_deserializer=lambda x: json.loads(x.decode('utf-8'))
+  )
+  
   for message in consumer:
     prediction = message.value
     if prediction['UUID'] == unique_id:
       response["status"] = "OK"
       response["prediction"] = prediction
       break
-  consumer.close()
   
   return json_util.dumps(response)
 
