@@ -532,6 +532,7 @@ def classify_flight_delays_realtime_response(unique_id):
       response["status"] = "OK"
       response["prediction"] = prediction
       break
+  consumer.close()
   
   return json_util.dumps(response)
 
