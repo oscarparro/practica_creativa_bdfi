@@ -138,6 +138,10 @@ object MakePrediction {
     // Inspect the output
     finalPredictions.printSchema()
 
+    val selectedColumns = Seq("DayOfMonth", "DayOfWeek", "DayOfYear", "DepDelay", "Dest", "Distance", "FlightDate", "Origin", "Prediction", "Timestamp", "UUID")
+    val finalPredictionsSelected = finalPredictions.select(selectedColumns.map(col): _*)
+
+
     // Define MongoUri for connection
     //val writeConfig = WriteConfig(Map("uri" -> "mongodb://127.0.0.1:27017/agile_data_science.flight_delay_classification_response"))
 
@@ -163,7 +167,7 @@ object MakePrediction {
       .option("spark.mongodb.collection", "flight_delay_classification_response")
       .outputMode("append")
 
-    val kafkaStream = finalPredictions
+    val kafkaStreamWriter = finalPredictions
       .selectExpr("CAST(Origin AS STRING) AS key", "to_json(struct(*)) AS value")
       .writeStream
       .format("kafka")
@@ -171,9 +175,24 @@ object MakePrediction {
       .option("topic", "flight_delay_classification_response")
       .option("checkpointLocation", "/tmp/kafka_checkpoint")
       .start()
+
+    val cassandraStreamWriter = finalPredictionsSelected
+      .writeStream
+      .format("org.apache.spark.sql.cassandra")
+      .option("keyspace", "agile_data_science")
+      .option("table", "flight_delay_classification_response")
+      .option("checkpointLocation", "/tmp/cassandra-checkpoints")
+      .option("spark.cassandra.connection.host", "cassandra")
+      .option("spark.cassandra.connection.port", "9042")
+      .option("spark.cassandra.auth.username", "cassandra") // Usuario de Cassandra
+      .option("spark.cassandra.auth.password", "cassandra")
+      .option("spark.cassandra.output.consistency.level", "LOCAL_ONE") // Contraseña de Cassandra
+      .outputMode("append")
       
     // run the query
     val query = dataStreamWriter.start()
+    val query_kafka = kafkaStreamWriter.start()
+    val query_cassandra = cassandraStreamWriter.start()
     // Console Output for predictions
 
     val consoleOutput = finalPredictions.writeStream
