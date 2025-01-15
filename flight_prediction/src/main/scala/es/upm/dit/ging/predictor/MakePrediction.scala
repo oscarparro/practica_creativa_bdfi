@@ -174,8 +174,8 @@ object MakePrediction {
       .option("kafka.bootstrap.servers", "kafka:9092")
       .option("topic", "flight_delay_classification_response")
       .option("checkpointLocation", "/tmp/kafka_checkpoint")
-      .start()
-
+      .outputMode("append")
+      
     val cassandraStreamWriter = finalPredictionsSelected
       .writeStream
       .format("org.apache.spark.sql.cassandra")
