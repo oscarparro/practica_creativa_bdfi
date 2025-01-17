@@ -139,7 +139,7 @@ object MakePrediction {
     // Inspect the output
     finalPredictions.printSchema()
 
-    val selectedColumns = Seq("DayOfMonth", "DayOfWeek", "DayOfYear", "DepDelay", "Dest", "Distance", "FlightDate", "Origin", "Prediction", "Timestamp", "UUID")
+    val selectedColumns = Seq("Carrier", "DayOfYear", "DayOfMonth", "DayOfWeek", "Dest", "DepDelay", "Distance", "FlightDate", "Origin", "Route", "Prediction", "Timestamp", "UUID")
     val finalPredictionsSelected = finalPredictions.select(selectedColumns.map(col): _*)
 
 
@@ -185,9 +185,7 @@ object MakePrediction {
       .option("checkpointLocation", "/tmp/cassandra-checkpoints")
       .option("spark.cassandra.connection.host", "cassandra")
       .option("spark.cassandra.connection.port", "9042")
-      .option("spark.cassandra.auth.username", "cassandra") // Usuario de Cassandra
-      .option("spark.cassandra.auth.password", "cassandra")
-      .option("spark.cassandra.output.consistency.level", "LOCAL_ONE") // Contraseña de Cassandra
+      .option("spark.cassandra.output.consistency.level", "LOCAL_ONE")
       .outputMode("append")
       
     // run the query
