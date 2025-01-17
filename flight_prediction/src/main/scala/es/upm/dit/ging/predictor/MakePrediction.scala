@@ -185,6 +185,8 @@ object MakePrediction {
       .option("checkpointLocation", "/tmp/cassandra-checkpoints")
       .option("spark.cassandra.connection.host", "cassandra")
       .option("spark.cassandra.connection.port", "9042")
+      .option("spark.cassandra.auth.username", "cassandra")
+      .option("spark.cassandra.auth.password", "cassandra")
       .option("spark.cassandra.output.consistency.level", "LOCAL_ONE")
       .outputMode("append")
       
